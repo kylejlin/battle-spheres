@@ -13,6 +13,7 @@ import {
 import OrbitControls from 'three-orbitcontrols';
 import battleField from './battleField';
 import { RED, BLUE } from './consts';
+import processWithNaiveEngine from './processWithNaiveEngine';
 
 const TAU = 2 * Math.PI;
 
@@ -65,6 +66,7 @@ class BattleSphere {
     cooldown = 1.5e3,
     seeingRange = 20,
     attackingRange = 10,
+    moveSpeed = 1,
     initPosition = { x: 0, y: 0, z: 0 },
   }) {
     this.team = team;
@@ -73,11 +75,13 @@ class BattleSphere {
     this.cooldown = cooldown;
     this.seeingRange = seeingRange;
     this.attackingRange = attackingRange;
+    this.moveSpeed = moveSpeed;
     this.mesh = makeAndAddSphereMesh(team, radius);
 
     this.currentHealth = initHealth;
     this.currentCooldown = 0;
     this.currentPosition = { ...initPosition };
+    this.currentTarget = null;
   }
 
   removeMeshFromScene() {
@@ -89,6 +93,8 @@ const state = {
   spheres: battleField.map(options => new BattleSphere(options)),
 };
 const update = (dt) => {
+  processWithNaiveEngine(state.spheres, dt);
+  // Clean up dead spheres and update mesh positions of live spheres.
   for (let i = 0, len = state.spheres.length; i < len; i++) {
     const sphere = state.spheres[i];
     if (sphere.currentHealth <= 0) {
