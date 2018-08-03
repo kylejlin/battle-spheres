@@ -64,7 +64,7 @@ class BattleSphere {
     initHealth = 100,
     damage = 25,
     cooldown = 1.5e3,
-    seeingRange = 20,
+    seeingRange = 50,
     attackingRange = 10,
     moveSpeed = 1,
     initPosition = { x: 0, y: 0, z: 0 },
