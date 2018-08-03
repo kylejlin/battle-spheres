@@ -35,17 +35,22 @@ const processWithNaiveEngine = (spheres, dt) => {
       }
     }
     // If we have no current target,
-    //   then try to find one.
+    //   then choose the closest enemy.
     if (sphere.currentTarget === null) {
       const enemies = getEnemies(sphere.team);
+      let closestEnemy = null;
+      let closestDistance = Infinity;
       for (const enemy of enemies) {
         dx = enemy.currentPosition.x - sphere.currentPosition.x;
         dz = enemy.currentPosition.z - sphere.currentPosition.z;
         dist = Math.hypot(dx, dz);
-        if (enemy.currentHealth > 0 && dist <= sphere.seeingRange) {
-          sphere.currentTarget = enemy;
-          break;
+        if (enemy.currentHealth > 0 && dist < closestDistance) {
+          closestEnemy = enemy;
+          closestDistance = dist;
         }
+      }
+      if (closestEnemy !== null && closestDistance <= sphere.seeingRange) {
+        sphere.currentTarget = closestEnemy;
       }
     }
     // If one can't be found,
