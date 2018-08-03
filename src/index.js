@@ -11,7 +11,8 @@ import {
   SphereBufferGeometry,
 } from 'three';
 import OrbitControls from 'three-orbitcontrols';
-import keys from './keys';
+import battleField from './battleField';
+import { RED, BLUE } from './consts';
 
 const TAU = 2 * Math.PI;
 
@@ -46,21 +47,60 @@ camera.position.set(1, 1, 1).multiplyScalar(100);
 camera.lookAt(new Vector3(0, 0, 0));
 controls.update();
 
-const RED = 0xaa0000;
-const BLUE = 0x0000aa;
-const makeSphere = (color, r = 1, x = 0, y = 0, z = 0) => {
+const makeAndAddSphereMesh = (color, r = 1) => {
   const mesh = new Mesh(
     new SphereBufferGeometry(r, 32, 32),
     new MeshStandardMaterial({ color })
   );
-  mesh.position.set(x, y, z);
+  scene.add(mesh);
   return mesh;
 };
-scene.add(makeSphere(RED, 1, 0, 1, 0));
 
+class BattleSphere {
+  constructor({
+    team,
+    radius = 1,
+    initHealth = 100,
+    damage = 25,
+    cooldown = 1.5e3,
+    seeingRange = 20,
+    attackingRange = 10,
+    initPosition = { x: 0, y: 0, z: 0 },
+  }) {
+    this.team = team;
+    this.radius = radius;
+    this.damage = damage;
+    this.cooldown = cooldown;
+    this.seeingRange = seeingRange;
+    this.attackingRange = attackingRange;
+    this.mesh = makeAndAddSphereMesh(team, radius);
 
+    this.currentHealth = initHealth;
+    this.currentCooldown = 0;
+    this.currentPosition = { ...initPosition };
+  }
+
+  removeMeshFromScene() {
+    scene.remove(this.mesh);
+  }
+}
+
+const state = {
+  spheres: battleField.map(options => new BattleSphere(options)),
+};
 const update = (dt) => {
+  for (let i = 0, len = state.spheres.length; i < len; i++) {
+    const sphere = state.spheres[i];
+    if (sphere.currentHealth <= 0) {
+      sphere.removeMeshFromScene();
+      state.spheres.splice(i, 1);
+      i--;
+      len--;
+      continue;
+    }
 
+    sphere.mesh.position.set(sphere.currentPosition.x, sphere.currentPosition.y, sphere.currentPosition.z);
+  }
 };
 
 let then = Date.now();
