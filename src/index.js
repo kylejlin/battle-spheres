@@ -98,6 +98,44 @@ const state = {
   mouse: { x: 0, y: 0 },
 };
 
+const gui = new GUI();
+const settings = {
+  timeScale: 1,
+  radius: 1,
+  health: 100,
+  damage: 25,
+  cooldownSeconds: 1.5,
+  seeingRange: 50,
+  attackingRange: 10,
+  moveSpeed: 1,
+};
+gui.add(settings, 'timeScale', 0, 10);
+gui.add(settings, 'radius', 0.1, 10);
+gui.add(settings, 'health', 1, 10000);
+gui.add(settings, 'damage', 1, 10000);
+gui.add(settings, 'cooldownSeconds', 0, 60);
+gui.add(settings, 'seeingRange', 1, 100);
+gui.add(settings, 'attackingRange', 0, 100);
+gui.add(settings, 'moveSpeed', 0, 100);
+
+const update = (dt) => {
+  const scaledDt = dt * settings.timeScale;
+  processWithNaiveEngine(state.spheres, scaledDt);
+  // Clean up dead spheres and update mesh positions of live spheres.
+  for (let i = 0, len = state.spheres.length; i < len; i++) {
+    const sphere = state.spheres[i];
+    if (sphere.currentHealth <= 0) {
+      sphere.removeMeshFromScene();
+      state.spheres.splice(i, 1);
+      i--;
+      len--;
+      continue;
+    }
+
+    sphere.mesh.position.set(sphere.currentPosition.x, sphere.currentPosition.y, sphere.currentPosition.z);
+  }
+};
+
 window.addEventListener('mousemove', ({ clientX, clientY }) => {
   state.mouse.x = (2 * clientX / window.innerWidth) - 1;
   state.mouse.y = -((2 * clientY / window.innerHeight) - 1);
@@ -117,6 +155,13 @@ window.addEventListener('click', (e) => {
     if (keys.K1) {
       state.spheres.push(new BattleSphere({
         team: BLUE,
+        radius: settings.radius,
+        initHealth: settings.health,
+        damage: settings.damage,
+        cooldown: settings.cooldownSeconds * 1e3,
+        seeingRange: settings.seeingRange,
+        attackingRange: settings.attackingRange,
+        moveSpeed: settings.moveSpeed,
         initPosition: {
           x: point.x,
           y: 1,
@@ -127,6 +172,13 @@ window.addEventListener('click', (e) => {
     if (keys.K2) {
       state.spheres.push(new BattleSphere({
         team: RED,
+        radius: settings.radius,
+        initHealth: settings.health,
+        damage: settings.damage,
+        cooldown: settings.cooldownSeconds * 1e3,
+        seeingRange: settings.seeingRange,
+        attackingRange: settings.attackingRange,
+        moveSpeed: settings.moveSpeed,
         initPosition: {
           x: point.x,
           y: 1,
@@ -136,30 +188,6 @@ window.addEventListener('click', (e) => {
     }
   }
 });
-
-const gui = new GUI();
-const settings = {
-  timeScale: 1,
-};
-gui.add(settings, 'timeScale', 0, 10);
-
-const update = (dt) => {
-  const scaledDt = dt * settings.timeScale;
-  processWithNaiveEngine(state.spheres, scaledDt);
-  // Clean up dead spheres and update mesh positions of live spheres.
-  for (let i = 0, len = state.spheres.length; i < len; i++) {
-    const sphere = state.spheres[i];
-    if (sphere.currentHealth <= 0) {
-      sphere.removeMeshFromScene();
-      state.spheres.splice(i, 1);
-      i--;
-      len--;
-      continue;
-    }
-
-    sphere.mesh.position.set(sphere.currentPosition.x, sphere.currentPosition.y, sphere.currentPosition.z);
-  }
-};
 
 let then = Date.now();
 const gameLoop = () => {
