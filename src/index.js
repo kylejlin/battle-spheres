@@ -102,6 +102,12 @@ window.addEventListener('mousemove', ({ clientX, clientY }) => {
   state.mouse.y = -((2 * clientY / window.innerHeight) - 1);
 });
 window.addEventListener('click', (e) => {
+  if (keys.K3) {
+    for (const sphere of state.spheres) {
+      sphere.removeMeshFromScene();
+    }
+    state.spheres.splice(0, Infinity);
+  }
   const raycaster = new Raycaster();
   raycaster.setFromCamera(new Vector2(state.mouse.x, state.mouse.y), camera);
   const hits = raycaster.intersectObject(floor);

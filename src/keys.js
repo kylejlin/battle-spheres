@@ -13,6 +13,7 @@ const Codes = {
   32: 'SPACE',
   49: 'K1',
   50: 'K2',
+  51: 'K3',
 };
 window.addEventListener('keydown', (e) => {
   const keyName = Codes[e.keyCode];
