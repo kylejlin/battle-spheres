@@ -14,6 +14,7 @@ import {
 } from 'three';
 import OrbitControls from 'three-orbitcontrols';
 import { GUI } from 'dat.gui';
+import { Engine, Bodies, Body, World } from 'matter-js';
 import keys from './keys';
 import battleField from './battleField';
 import { RED, BLUE } from './consts';
@@ -61,6 +62,17 @@ const makeAndAddSphereMesh = (color, r = 1) => {
   return mesh;
 };
 
+const makeAndAddRigidBody = (position, radius, mass) => {
+  const circle = Bodies.circle(position.x, position.z, radius);
+  circle.frictionAir = 0;
+  circle.mass = mass;
+  World.addBody(
+    state.physicsEngine.world,
+    circle
+  );
+  return circle;
+};
+
 class BattleSphere {
   constructor({
     team,
@@ -71,6 +83,7 @@ class BattleSphere {
     seeingRange = 50,
     attackingRange = 10,
     moveSpeed = 1,
+    mass = 1,
     initPosition = { x: 0, y: 0, z: 0 },
   }) {
     this.team = team;
@@ -80,23 +93,33 @@ class BattleSphere {
     this.seeingRange = seeingRange;
     this.attackingRange = attackingRange;
     this.moveSpeed = moveSpeed;
+    this.mass = mass;
     this.mesh = makeAndAddSphereMesh(team, radius);
+    this.rigidBody = makeAndAddRigidBody(initPosition, radius, mass);
 
     this.currentHealth = initHealth;
     this.currentCooldown = 0;
-    this.currentPosition = { ...initPosition };
     this.currentTarget = null;
   }
 
-  removeMeshFromScene() {
+  cleanUp() {
     scene.remove(this.mesh);
+    World.remove(
+      state.physicsEngine.world,
+      this.rigidBody
+    );
   }
 }
 
 const state = {
-  spheres: battleField.map(options => new BattleSphere(options)),
   mouse: { x: 0, y: 0 },
+  physicsEngine: Engine.create(),
 };
+state.physicsEngine.world.gravity = {
+  x: 0,
+  y: 0,
+};
+state.spheres = battleField.map(options => new BattleSphere(options));
 
 const gui = new GUI({
   load: {
@@ -108,6 +131,7 @@ const gui = new GUI({
     seeingRange: 50,
     attackingRange: 10,
     moveSpeed: 1,
+    mass: 1,
   },
   preset: 'Default',
 });
@@ -120,6 +144,7 @@ const settings = {
   seeingRange: 50,
   attackingRange: 10,
   moveSpeed: 1,
+  mass: 1,
 };
 gui.add(settings, 'timeScale', 0, 10);
 gui.add(settings, 'radius', 0.1, 10);
@@ -129,24 +154,27 @@ gui.add(settings, 'cooldownSeconds', 0, 60);
 gui.add(settings, 'seeingRange', 1, 100);
 gui.add(settings, 'attackingRange', 0, 100);
 gui.add(settings, 'moveSpeed', 0, 100);
+gui.add(settings, 'mass', 0.1, 100);
 gui.remember(settings);
 
 const update = (dt) => {
   const scaledDt = dt * settings.timeScale;
   processWithNaiveEngine(state.spheres, scaledDt);
+  Engine.update(state.physicsEngine, scaledDt);
   // Clean up dead spheres and update mesh positions of live spheres.
   for (let i = 0, len = state.spheres.length; i < len; i++) {
     const sphere = state.spheres[i];
     if (sphere.currentHealth <= 0) {
-      sphere.removeMeshFromScene();
+      sphere.cleanUp();
       state.spheres.splice(i, 1);
       i--;
       len--;
       continue;
     }
 
-    sphere.mesh.position.set(sphere.currentPosition.x, sphere.currentPosition.y, sphere.currentPosition.z);
+    sphere.mesh.position.set(sphere.rigidBody.position.x, 1, sphere.rigidBody.position.y);
   }
+  console.log(state.physicsEngine.world.bodies);
 };
 
 window.addEventListener('mousemove', ({ clientX, clientY }) => {
@@ -156,7 +184,7 @@ window.addEventListener('mousemove', ({ clientX, clientY }) => {
 window.addEventListener('click', (e) => {
   if (keys.K3) {
     for (const sphere of state.spheres) {
-      sphere.removeMeshFromScene();
+      sphere.cleanUp();
     }
     state.spheres.splice(0, Infinity);
   }

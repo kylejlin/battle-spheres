@@ -26,8 +26,8 @@ const processWithNaiveEngine = (spheres, dt) => {
       if (sphere.currentTarget.currentHealth <= 0) {
         sphere.currentTarget = null;
       } else {
-        dx = sphere.currentTarget.currentPosition.x - sphere.currentPosition.x;
-        dz = sphere.currentTarget.currentPosition.z - sphere.currentPosition.z;
+        dx = sphere.currentTarget.rigidBody.position.x - sphere.rigidBody.position.x;
+        dz = sphere.currentTarget.rigidBody.position.y - sphere.rigidBody.position.y;
         dist = Math.hypot(dx, dz);
         if (dist > sphere.seeingRange) {
           sphere.currentTarget = null;
@@ -41,8 +41,8 @@ const processWithNaiveEngine = (spheres, dt) => {
       let closestEnemy = null;
       let closestDistance = Infinity;
       for (const enemy of enemies) {
-        dx = enemy.currentPosition.x - sphere.currentPosition.x;
-        dz = enemy.currentPosition.z - sphere.currentPosition.z;
+        dx = enemy.rigidBody.position.x - sphere.rigidBody.position.x;
+        dz = enemy.rigidBody.position.y - sphere.rigidBody.position.y;
         dist = Math.hypot(dx, dz);
         if (enemy.currentHealth > 0 && dist < closestDistance) {
           closestEnemy = enemy;
@@ -69,8 +69,8 @@ const processWithNaiveEngine = (spheres, dt) => {
     } else {
       const ndx = dx / dist;
       const ndz = dz / dist;
-      sphere.currentPosition.x += ndx * dt * 1e-3 * sphere.moveSpeed;
-      sphere.currentPosition.z += ndz * dt * 1e-3 * sphere.moveSpeed;
+      sphere.rigidBody.position.x += ndx * dt * 1e-3 * sphere.moveSpeed;
+      sphere.rigidBody.position.y += ndz * dt * 1e-3 * sphere.moveSpeed;
     }
   }
 };
