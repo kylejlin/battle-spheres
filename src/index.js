@@ -4,13 +4,16 @@ import {
   WebGLRenderer,
   Mesh,
   Vector3,
+  Vector2,
   MeshStandardMaterial,
   PlaneGeometry,
   SpotLight,
   HemisphereLight,
   SphereBufferGeometry,
+  Raycaster,
 } from 'three';
 import OrbitControls from 'three-orbitcontrols';
+import keys from './keys';
 import battleField from './battleField';
 import { RED, BLUE } from './consts';
 import processWithNaiveEngine from './processWithNaiveEngine';
@@ -91,7 +94,42 @@ class BattleSphere {
 
 const state = {
   spheres: battleField.map(options => new BattleSphere(options)),
+  mouse: { x: 0, y: 0 },
 };
+
+window.addEventListener('mousemove', ({ clientX, clientY }) => {
+  state.mouse.x = (2 * clientX / window.innerWidth) - 1;
+  state.mouse.y = -((2 * clientY / window.innerHeight) - 1);
+});
+window.addEventListener('click', (e) => {
+  const raycaster = new Raycaster();
+  raycaster.setFromCamera(new Vector2(state.mouse.x, state.mouse.y), camera);
+  const hits = raycaster.intersectObject(floor);
+  if (hits.length > 0) {
+    const [{ point }] = hits;
+    if (keys.K1) {
+      state.spheres.push(new BattleSphere({
+        team: BLUE,
+        initPosition: {
+          x: point.x,
+          y: 1,
+          z: point.z,
+        },
+      }));
+    }
+    if (keys.K2) {
+      state.spheres.push(new BattleSphere({
+        team: RED,
+        initPosition: {
+          x: point.x,
+          y: 1,
+          z: point.z,
+        },
+      }));
+    }
+  }
+});
+
 const update = (dt) => {
   processWithNaiveEngine(state.spheres, dt);
   // Clean up dead spheres and update mesh positions of live spheres.
