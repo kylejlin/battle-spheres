@@ -98,7 +98,19 @@ const state = {
   mouse: { x: 0, y: 0 },
 };
 
-const gui = new GUI();
+const gui = new GUI({
+  load: {
+    timeScale: 1,
+    radius: 1,
+    health: 100,
+    damage: 25,
+    cooldownSeconds: 1.5,
+    seeingRange: 50,
+    attackingRange: 10,
+    moveSpeed: 1,
+  },
+  preset: 'Default',
+});
 const settings = {
   timeScale: 1,
   radius: 1,
@@ -117,6 +129,7 @@ gui.add(settings, 'cooldownSeconds', 0, 60);
 gui.add(settings, 'seeingRange', 1, 100);
 gui.add(settings, 'attackingRange', 0, 100);
 gui.add(settings, 'moveSpeed', 0, 100);
+gui.remember(settings);
 
 const update = (dt) => {
   const scaledDt = dt * settings.timeScale;
