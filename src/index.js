@@ -81,7 +81,7 @@ class BattleSphere {
     damage = 25,
     cooldown = 1.5e3,
     seeingRange = 50,
-    attackingRange = 10,
+    attackingRange = 8,
     moveSpeed = 1,
     mass = 1,
     initPosition = { x: 0, y: 0, z: 0 },
@@ -92,7 +92,7 @@ class BattleSphere {
     this.cooldown = cooldown;
     this.seeingRange = seeingRange;
     this.attackingRange = attackingRange;
-    this.moveSpeed = moveSpeed;
+    this.moveSpeed = moveSpeed * 1e-1;
     this.mass = mass;
     this.mesh = makeAndAddSphereMesh(team, radius);
     this.rigidBody = makeAndAddRigidBody(initPosition, radius, mass);
@@ -115,6 +115,7 @@ const state = {
   mouse: { x: 0, y: 0 },
   physicsEngine: Engine.create(),
 };
+window.state = state;
 state.physicsEngine.world.gravity = {
   x: 0,
   y: 0,
@@ -174,7 +175,7 @@ const update = (dt) => {
 
     sphere.mesh.position.set(sphere.rigidBody.position.x, 1, sphere.rigidBody.position.y);
   }
-  console.log(state.physicsEngine.world.bodies);
+  //console.log(state.physicsEngine.world.bodies);
 };
 
 window.addEventListener('mousemove', ({ clientX, clientY }) => {

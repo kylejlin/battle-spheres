@@ -1,4 +1,40 @@
+import { Body } from 'matter-js';
 import { RED, BLUE } from './consts';
+
+const K = 0.01;
+
+const absClamp = (a, b) => {
+  return Math.abs(a) > Math.abs(b)
+    ? b
+    : a;
+};
+
+const applyCorrection = (sphere, dt, intendedVelocity) => {
+  const actualVelocity = sphere.rigidBody.velocity;
+  const correctionVelocity = {
+    x: intendedVelocity.x - actualVelocity.x,
+    y: intendedVelocity.y - actualVelocity.y,
+  };
+  const correctionSpeed = Math.hypot(correctionVelocity.x, correctionVelocity.y);
+  const normalizedVelocity = correctionSpeed === 0
+    ? { x: 0, y: 0 }
+    : {
+      x: correctionVelocity.x / correctionSpeed,
+      y: correctionVelocity.y / correctionSpeed,
+    };
+  const maximumCorrectionVelocity = {
+    x: absClamp(normalizedVelocity.x * sphere.moveSpeed * K, correctionVelocity.x),
+    y: absClamp(normalizedVelocity.y * sphere.moveSpeed * K, correctionVelocity.y),
+  };
+  Body.applyForce(
+    sphere.rigidBody,
+    sphere.rigidBody.position,
+    {
+      x: maximumCorrectionVelocity.x * dt * 1e-3,
+      y: maximumCorrectionVelocity.y * dt * 1e-3,
+    }
+  );
+};
 
 const processWithNaiveEngine = (spheres, dt) => {
   const reds = spheres.filter(s => s.team === RED);
@@ -54,14 +90,17 @@ const processWithNaiveEngine = (spheres, dt) => {
       }
     }
     // If one can't be found,
-    //   there's nothing left to do.
+    //   gradually to come to a stop.
     if (sphere.currentTarget === null) {
+      applyCorrection(sphere, dt, { x: 0, y: 0 });
       continue;
     }
-    // If we are in firing range, then fire
-    //   assuming our current cooldown permits it.
+    // If we are in firing range, gradually
+    //   come to a stop and fire if our cooldown
+    //   permits it.
     // Else, move toward our target.
     if (dist <= sphere.attackingRange) {
+      applyCorrection(sphere, dt, { x: 0, y: 0 });
       if (sphere.currentCooldown <= 0) {
         sphere.currentCooldown = sphere.cooldown;
         sphere.currentTarget.currentHealth -= sphere.damage;
@@ -69,8 +108,10 @@ const processWithNaiveEngine = (spheres, dt) => {
     } else {
       const ndx = dx / dist;
       const ndz = dz / dist;
-      sphere.rigidBody.position.x += ndx * dt * 1e-3 * sphere.moveSpeed;
-      sphere.rigidBody.position.y += ndz * dt * 1e-3 * sphere.moveSpeed;
+      applyCorrection(sphere, dt, {
+        x: ndx * sphere.moveSpeed,
+        y: ndz * sphere.moveSpeed,
+      });
     }
   }
 };

@@ -18,7 +18,7 @@ export default [
 
   {
     team: RED,
-    initPosition: { x: -24, y: 1, z: -10 },
+    initPosition: { x: -30, y: 1, z: -10 },
   },
 
   {
