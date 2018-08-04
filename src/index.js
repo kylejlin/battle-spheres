@@ -13,6 +13,7 @@ import {
   Raycaster,
 } from 'three';
 import OrbitControls from 'three-orbitcontrols';
+import { GUI } from 'dat.gui';
 import keys from './keys';
 import battleField from './battleField';
 import { RED, BLUE } from './consts';
@@ -136,8 +137,15 @@ window.addEventListener('click', (e) => {
   }
 });
 
+const gui = new GUI();
+const settings = {
+  timeScale: 1,
+};
+gui.add(settings, 'timeScale', 0, 10);
+
 const update = (dt) => {
-  processWithNaiveEngine(state.spheres, dt);
+  const scaledDt = dt * settings.timeScale;
+  processWithNaiveEngine(state.spheres, scaledDt);
   // Clean up dead spheres and update mesh positions of live spheres.
   for (let i = 0, len = state.spheres.length; i < len; i++) {
     const sphere = state.spheres[i];
